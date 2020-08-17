@@ -36,29 +36,10 @@ if [ -d $DOCKER_CMD ]; then
     exit 1
 fi
 
-
-_pushContainer() {
-  TARGET_DIR=$1
-  CURRENT_DIR=`pwd`
-  echo "Push container: $TARGET_DIR"
-  cd $TARGET_DIR
-  . envvars.docker.sh
-  ../docker-ctl.sh  push
-  cd $CURRENT_DIR
-}
-
 _buildContainer() {
   DOCKERFILE="./$DOCKERFILES_DIR/$DOCKER_TAG_NAME.Dockerfile"
   echo "Building $DOCKERFILE Tag: $DOCKER_TAG_NAME"
   $DOCKER_CMD build \
-    --build-arg USER=$USER \
-    --build-arg HOME_DIR=$HOME_DIR \
-    --build-arg PRESTO_VERSION=$PRESTO_VERSION \
-    --build-arg PRESTO_SERVER_ARCHIVE=$PRESTO_SERVER_ARCHIVE \
-    --build-arg PRESTO_CLI_ARCHIVE=$PRESTO_CLI_ARCHIVE \
-    --build-arg PRESTO_TMP_DIR=$PRESTO_TMP_DIR \
-    --build-arg PRESTO_DIR=$PRESTO_DIR \
-    --build-arg PRESTO_DATA_DIR=$PRESTO_DATA_DIR \
     -t $DOCKER_TAG_NAME \
     --file $DOCKERFILE .
 }
@@ -159,6 +140,10 @@ case "$CMD" in
     EXTRA_ARGS=""
     _dockerRun "$EXTRA_ARGS" $ID $DOCKER_TAG_NAME
   ;;
+  push)
+    DOCKER_TAG_NAME=${2:-"$DOCKER_TAG_NAME"}
+    ./docker-ctl.sh push $DOCKER_TAG_NAME
+    ;;
   ubuntu-update)
     sudo apt-get update
     DEBIAN_FRONTEND=noninteractive sudo apt-get -yqq upgrade
