@@ -29,4 +29,14 @@ Check the logs in the dir:
 
 ```/opt/appdynamics/logs```
 
+Create a local image repositoy localhost:5555 using:
+
+```./ctl.sh docker-create-repository```
+
+Push the container image to the reposity:
+
+```./docker-ctl.sh push```
+
+The Kubernetes resource descriptor ```kubernetes/temacagent.yaml``` can be used for deploying the container to Kubernetes.
+
 
