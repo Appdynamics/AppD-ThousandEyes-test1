@@ -1,6 +1,10 @@
 # AppD-ThousandEyes-test1
 Provides docker and K8s containers with AppDynamics Machine Agent and ThousandEyes monitoring extension deployed
 
+Clone this repository:
+
+```git clone https://github.com/Appdynamics/AppD-ThousandEyes-test1.git```
+
 Configure the environment using the environment variables in the file:
 
 ```envvars.sh```
