@@ -9,9 +9,12 @@ RUN apt-get update -yqq  && \
     apt-get -y clean
 #RUN yum -y  install curl procps vim-enhanced net-tools iputils-ping iproute2
 
+RUN pip3 install  requests
+
 # Add ThousdanEye Monitoring extension to the Machine Agent monitors dir
 ADD thousandeyes-custom-monitor ${MACHINE_AGENT_HOME}/monitors/ThousandEyes/
 RUN chmod +x ${MACHINE_AGENT_HOME}/monitors/ThousandEyes/teappd-monitor.sh
+RUN chmod +x ${MACHINE_AGENT_HOME}/monitors/ThousandEyes/teappd-monitor.py
 COPY ctl.sh                     ${MACHINE_AGENT_HOME}/
 COPY envvars.sh                 ${MACHINE_AGENT_HOME}/
 

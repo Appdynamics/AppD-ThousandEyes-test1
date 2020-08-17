@@ -4,7 +4,6 @@
 #
 # Maintainer: Davdi Ryder
 #
-# https://hub.docker.com/_/registry
 
 CMD=${1:-"help"}
 CMD_ARGS_LEN=${#}
@@ -103,6 +102,27 @@ _holdContainerOpen() {
 }
 
 
+
+
+_createLocalContainerRepository() {
+  IMAGE_NAME="registry"
+  IMAGE_TAG="2.7.1"
+  CONTANER_NAME="dock-registry"
+  REGISTRY_DIR=$HOME"/Docker-Registry-Data"
+  LOCAL_PORT="5555"
+  if [ ! -d "$REGISTRY_DIR" ]; then
+    echo "Creating local docker registry: $REGISTRY_DIR"
+    mkdir -p $REGISTRY_DIR
+  fi
+
+  docker run -d \
+    -p $LOCAL_PORT:5000 \
+    --restart=always \
+    --name $CONTANER_NAME \
+    -v $REGISTRY_DIR:/var/lib/registry \
+    $IMAGE_NAME:$IMAGE_TAG
+}
+
 ALL_BUILD_LIST=("ubuntu-base" "presto-base" "presto-coordinator" "presto-worker" "mysql" "postgres" "starburstdata-presto-coordinator")
 ALL_RUN_LIST=("presto-coordinator" "presto-worker" "mysql")
 
@@ -116,6 +136,9 @@ case "$CMD" in
 
     ${MACHINE_AGENT_HOME}/startup.sh
     sleep 9999
+    ;;
+  docker-create-repository)
+    _createLocalContainerRepository
     ;;
   build) # Expects Argument APP_ID
     DOCKER_TAG_NAME=${2:-"$DOCKER_TAG_NAME"}
