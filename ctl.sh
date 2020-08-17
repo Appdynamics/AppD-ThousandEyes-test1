@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Docker and Kuberntes help script
+# Docker and Kuberntes helper script
 #
 # Maintainer: Davdi Ryder
 #
