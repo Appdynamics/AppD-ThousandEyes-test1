@@ -29,9 +29,9 @@ Check the logs in the dir:
 
 ```/opt/appdynamics/logs```
 
-Create a local image repositoy localhost:5555 using:
+Create a local image repositoy localhost:32000 using:
 
-```./ctl.sh docker-create-repository```
+```microk8s.enable registry```
 
 Push the container image to the reposity:
 
