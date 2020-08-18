@@ -38,3 +38,7 @@ Push the container image to the reposity:
 ```./ctl.sh push```
 
 The Kubernetes resource descriptor ```kubernetes/temacagent.yaml``` can be used for deploying the container to Kubernetes.
+
+```microk8s.kubectl create -f kubernetes/temacagent.yaml```
+
+
