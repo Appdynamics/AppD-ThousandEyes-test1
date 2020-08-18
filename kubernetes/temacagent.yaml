@@ -1,26 +1,38 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: temacagent
+  name: thousandeyes
+  namespace: default
+spec:
+  ports:
+  - port: 8080
+    name: thousandeyes
+  selector:
+    app: thousandeyes
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thousandeyes
   namespace: default
 spec:
   selector:
-    name: temacagent
-  ports:
-  - name: macgent # Actually, no port is needed.
-    port: 8080
-    targetPort: 8080
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: temacagent
-  labels:
-    app: temacagent
-  namespace: default
-spec:
-  hostname: temacagent
-  subdomain: default-subdomain
-  containers:
-    - image: localhost:5555/temacagent
-      name: temacagent
+    matchLabels:
+      app: thousandeyes
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: thousandeyes
+    spec:
+      containers:
+        - image: localhost:32000/temacagent
+          name: thousandeyes
+          env:
+          - name: ENV-K8S_V1
+            value: "thousandeyes"
+          ports:
+            - containerPort: 8080
+              name: thousandeyes
