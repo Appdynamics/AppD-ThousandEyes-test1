@@ -104,8 +104,8 @@ _createLocalContainerRepository() {
     $IMAGE_NAME:$IMAGE_TAG
 }
 
-ALL_BUILD_LIST=("ubuntu-base" "presto-base" "presto-coordinator" "presto-worker" "mysql" "postgres" "starburstdata-presto-coordinator")
-ALL_RUN_LIST=("presto-coordinator" "presto-worker" "mysql")
+ALL_BUILD_LIST=("temacagent")
+ALL_RUN_LIST=("temacagent")
 
 case "$CMD" in
   test)
