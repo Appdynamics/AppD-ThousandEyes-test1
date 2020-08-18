@@ -3,7 +3,7 @@
 # teappd-monitor.py - a Python script for querying ThousandEyes test metrics, transforming metrics JSON payload, and pushing to AppD.
 #
 
-import os, time, sys, base64, json,requests
+import os, time, sys, base64, json, requests, statistics
 from datetime import datetime
 
 te_apiURL = 'https://api.thousandeyes.com'
@@ -97,6 +97,10 @@ def query_latest_data(username, authtoken, accountname, testname):
         tests = teApi.getTests()['test']
         test = next((t for t in tests if t['testName'] == testname), None)
         testDetails = teApi.getTestDetails (str(test['testId']))['test'][0]
+        #EW path summary
+        testPathSummary = teApi.getTestSummaryPathTrace (str(test['testId']))['net']['pathVis'][0]['endpoints']
+
+
         # print (json.dumps(testDetails['agents']))
         # Aggregate Test Labels and Tags. If label name is the form of a JSON element ("<tag>: <value>") then aggregate into "tags"
         # testDetails['tags'] = {}
@@ -133,6 +137,8 @@ def query_latest_data(username, authtoken, accountname, testname):
             if 'server' in test: update_dict(aggdata, key, {'target':testDetails['server']})
             if 'serverIp' in test: update_dict(aggdata, key, {'target':testDetails['serverIp']})
 
+            #EW: add test path summary to JSON object
+            if testPathSummary: update_dict(aggdata, key, {'testPathSummary': str(testPathSummary)})
             # ensure these metrics are always present in the JSON object:
 
             update_dict(aggdata, key, {'connectTime':''})
@@ -204,14 +210,23 @@ if __name__ == '__main__':
     with open('connection.json') as f:
         connectionInfo = json.loads(f.read())
         try :
-            print('curl -s -X POST "' + connectionInfo['analytics-api'] + '/events/schema/' + schemaname + '" \
+            # Delete the schema
+            print('PRINT ', 'curl -s -X DELETE "' + connectionInfo['analytics-api'] + '/events/schema/' + schemaname + '" \
+            -H"X-Events-API-AccountName:' + connectionInfo['account-id'] + '" \
+            -H"X-Events-API-Key:' + connectionInfo['api-key'] + '" -H"Content-type: application/vnd.appd.events+json;v=2"' )
+
+            #print('PRINT ', 'curl -s -X POST "' + connectionInfo['analytics-api'] + '/events/schema/' + schemaname + '" \
+            #-H"X-Events-API-AccountName:' + connectionInfo['account-id'] + '" \
+            #-H"X-Events-API-Key:' + connectionInfo['api-key'] + '" -H"Content-type: application/vnd.appd.events+json;v=2" \
+            #-d \'{"schema" : ' + json.dumps(schema) + '} \' &>/dev/null')
+
+            # Create the Schema
+            createScheme = 'curl -s -X POST "' + connectionInfo['analytics-api'] + '/events/schema/' + schemaname + '" \
             -H"X-Events-API-AccountName:' + connectionInfo['account-id'] + '" \
             -H"X-Events-API-Key:' + connectionInfo['api-key'] + '" -H"Content-type: application/vnd.appd.events+json;v=2" \
-            -d \'{"schema" : ' + json.dumps(schema) + '} \' &>/dev/null')
-            os.system('curl -s -X POST "' + connectionInfo['analytics-api'] + '/events/schema/' + schemaname + '" \
-            -H"X-Events-API-AccountName:' + connectionInfo['account-id'] + '" \
-            -H"X-Events-API-Key:' + connectionInfo['api-key'] + '" -H"Content-type: application/vnd.appd.events+json;v=2" \
-            -d \'{"schema" : ' + json.dumps(schema) + '} \' &>/dev/null')
+            -d \'{"schema" : ' + json.dumps(schema) + '} \' &>/dev/null'
+            print( "CREATE SCHEMA ", createScheme)
+            os.system(createScheme)
 
         # PATCH http://analytics.api.example.com/events/schema/{schemaName}
         # X-Events-API-AccountName:<global_account_name>
@@ -229,10 +244,18 @@ if __name__ == '__main__':
         for metric in metrics :
             if metric in testround and testround[metric] != "":
                 print ("name=Custom Metrics|{0}|{1}|{2}, value={3}".format(testround['testName'], testround['agentName'].replace(',', ' '), metrics[metric], testround[metric]))
-        print(json.dumps(testround))
-        #jsondata = json.dumps(testround)
-        print ("DATE", testround['date'])
-        print("DATA", json.dumps(testround))
+
+        # New metrics from testPathSUmmary
+        tpsMetrics = { "tpsResponseTimeAve": 0, "tpsNumberOfHops": 0 }
+        try:
+            tpsData =   json.loads( testround['testPathSummary'].replace("'",'"') )
+            tpsMetrics["tpsResponseTimeAve"] = statistics.mean( [ v["responseTime"] for v in tpsData ] )
+            tpsMetrics["tpsNumberOfHops"] = statistics.mean(  [ v["numberOfHops"] for v in tpsData ] )
+            testround.update( tpsMetrics )
+        except Exception as e:
+            print( "TPS Metrics failed: {}".format())
+
+        print ("DATE",testround['date'] )
         post = "curl -s -X POST \"{0}/events/publish/{1}\" -H\"X-Events-API-AccountName: {2}\" -H\"X-Events-API-Key: {3}\" -H\"Content-type: application/vnd.appd.events+json;v=2\" -d \'[{4}]\'".format(
             connectionInfo['analytics-api'],
             schemaname,
@@ -240,6 +263,5 @@ if __name__ == '__main__':
             connectionInfo['api-key'],
             json.dumps(testround))
         print( "POST", post )
-        os.system (post)
-        print (json.dumps(metric)) #post = "curl -s -X POST -H \"User-Agent: ThousandEyes\" {} -d \'{}\'".format(targeturl, json.dumps(metric))
+        #print (json.dumps(metric)) #post = "curl -s -X POST -H \"User-Agent: ThousandEyes\" {} -d \'{}\'".format(targeturl, json.dumps(metric))
         os.system (post)
