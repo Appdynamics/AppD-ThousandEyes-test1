@@ -35,8 +35,6 @@ Create a local image repositoy localhost:32000 using:
 
 Push the container image to the reposity:
 
-```./docker-ctl.sh push```
+```./ctl.sh push```
 
 The Kubernetes resource descriptor ```kubernetes/temacagent.yaml``` can be used for deploying the container to Kubernetes.
-
-
