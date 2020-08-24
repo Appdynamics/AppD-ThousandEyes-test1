@@ -226,7 +226,7 @@ if __name__ == '__main__':
             -H"X-Events-API-Key:' + connectionInfo['api-key'] + '" -H"Content-type: application/vnd.appd.events+json;v=2" \
             -d \'{"schema" : ' + json.dumps(schema) + '} \' &>/dev/null'
             print( "CREATE SCHEMA ", createScheme)
-            os.system(createScheme)
+            #os.system(createScheme)
 
         # PATCH http://analytics.api.example.com/events/schema/{schemaName}
         # X-Events-API-AccountName:<global_account_name>
@@ -245,7 +245,24 @@ if __name__ == '__main__':
             if metric in testround and testround[metric] != "":
                 print ("name=Custom Metrics|{0}|{1}|{2}, value={3}".format(testround['testName'], testround['agentName'].replace(',', ' '), metrics[metric], testround[metric]))
 
-        # New metrics from testPathSUmmary
+        # Add missing data and fix integers/longs that are floats
+        missingData = { "string": "", "date": datetime.now().isoformat(), "integer": 0, "float": 0.0 }
+        for k,v in schema.items():
+            print( k )
+            if k in testround.keys():
+                if k not in testround.keys():
+                    print( "Adding ", k)
+                    testround[ k ] = missingData[ schema[k] ] # Add missing data
+                else: # Fix integers
+                    print( "Fix {} [{}] [{}]".format( k, schema[ k ], testround[ k ] ) )
+                    if schema[ k ] == "integer":
+                        try:
+                            testround[ k ] = int( testround[ k ] )
+                        except:
+                            testround[ k ] = missingData[ schema[k] ]
+        #print( "TEST Y1 ", y1)
+        #print( "TEST X1 ", x1)
+        # New metrics from testPathSummary
         tpsMetrics = { "tpsResponseTimeAve": 0, "tpsNumberOfHops": 0 }
         try:
             tpsData =   json.loads( testround['testPathSummary'].replace("'",'"') )
